@@ -75,7 +75,7 @@ class app ():
         self.titleVideo.place(relx=0.13, rely=0.36)
 
         self.downloadFrame = LabelFrame(self.root, text="Download", bd=2, relief=GROOVE, width=350, height=170, bg=self.bg).pack(anchor=CENTER)
-        self.btn_q1 = Button(self.downloadFrame, text="Hight Quality", height=3).place(relx=0.1, rely=0.62)
+        self.btn_q1 = Button(self.downloadFrame, text="Hight Quality", height=3,command=self.download).place(relx=0.1, rely=0.62)
         self.btn_q2 = Button(self.downloadFrame, text="Low Quality", height=3).place(relx=0.4, rely=0.62)
         self.btn_q3 = Button(self.downloadFrame, text="Only Sound", height=3).place(relx=0.7, rely=0.62)
         self.root.mainloop()
@@ -108,6 +108,6 @@ class app ():
             print("Erro na URL, ou Falha de conexção")
             return False
     def  download(self):
-        pass
+        video.streams.get_highest_resolution().download("Downloads")
 if __name__ == '__main__':
-    run = app()
+    run = initt()

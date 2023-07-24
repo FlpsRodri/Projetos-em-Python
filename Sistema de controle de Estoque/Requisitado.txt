@@ -1,0 +1,24 @@
+desenvolver um sistema de gerenciamento de tarefas para equipes de trabalho. 
+O sistema poderia permitir que os usuários criem tarefas, atribuam prazos e responsáveis, 
+definam prioridades e acompanhem o progresso da equipe em tempo real.
+O sistema também poderia incluir recursos de comunicação, 
+como chat e comentários, para facilitar a colaboração entre os membros da equipe. 
+O projeto poderia ser desenvolvido utilizando tecnologias como Java, Python ou JavaScript, 
+com um banco de dados para armazenar as informações das tarefas e usuários.
+
+
+
+
+ Pequeno sistema para creche de cães
+
+Descrição do Projeto:
+Tenho uma casa em que faço hotelzinho e creche de cães.
+Preciso de um sistema simples em que eu possa fazer as seguinter funções.
+
+-COntabilizar quantos dias foram adquiridos de creche e quantos dias restam do "pacote" adquirido
+
+-Ficha interna de cadastro de cada cachorro
+
+-Contabilizar entrada e saida de cada cachorro no hotelzinho. fazer o calculo tambem de desconto automatico e quanto fica cada diaria.
+
+-Enviar mensagem de lembrete de cobrança para cliente em datas pré determinadas.
