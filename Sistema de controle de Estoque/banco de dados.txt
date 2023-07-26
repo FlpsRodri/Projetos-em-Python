@@ -1,0 +1,4 @@
+https://pythonclub.com.br/guia-rapido-comandos-sqlite3.html
+https://pythonclub.com.br/gerenciando-banco-dados-sqlite3-python-parte1.html
+https://github.com/rg3915/python-sqlite
+https://www.freecodecamp.org/portuguese/news/como-criar-e-manipular-bancos-de-dados-sql-com-python/
