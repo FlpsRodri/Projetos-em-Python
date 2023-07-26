@@ -1,11 +1,20 @@
 import os
 import sqlite3
+from tkinter import *
 
 class chat():
     def __init__(self):
         pass
+    
+    def startChat(self,master):
+        self.root = Toplevel(master)
+        self.root.resizable(0,0)
+        self.root.geometry("")
+        self.root.title("Chat")
+        self.root.attributes("-topmost",True)
+        self.root.config(bg="#2dcc9f")
 
-class Db():
+class Db(object):
     def __init__(self):
         pass
     
@@ -66,14 +75,17 @@ class Db():
                 else:
                     _list.append( column + "=" + (f"'{values[index]}'"))
             columns = ""
-            for i in _list: columns +=i
+            for i in _list: 
+                columns +=i
             
             self.cursor.execute(f"UPDATE {table} SET {columns} WHERE id = {whereID}")
             self.bank.commit()
         except Exception as ERROR: return ERROR
             
-    def Delete(self):
-        pass
+    def Delete(self,table,where):
+        if not "=" in str(where): return False  
+        self.cursor.execute(f"DELETE FROM {table} WHERE {where}")
+        self.bank.commit()
     
     def closeDB(self):
         self.bank.close()
@@ -82,15 +94,15 @@ class app(chat,Db):
     def __init__(self):
         self.table="teste"
         self.columns = ["nome", "telefone", "usuario", "senha"]
+        self.chat = Tk()
         self.createBank(bank_name="NewDB.sql", table=self.table, columns=self.columns)
-        
+        #values = ["Null","Null","Null","Null"]
         #self.Insert("teste",columns=self.columns,values=" 'nome', 'telefone', 'usuario', 'senha'" )
-        #self.Update(table=self.table,columns=self.columns,values=values,whereID=1)
+        #print(self.Update(table=self.table,columns=self.columns,values=values,whereID=2))
+        #self.Delete("teste","id = 0")
         
-        print(self.consultDB("teste"))
-        
-        
-        
+        self.startChat(self.chat)
+        self.chat.mainloop()
         self.closeDB()
         
 if __name__ == "__main__":
