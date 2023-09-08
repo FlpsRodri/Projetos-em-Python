@@ -1,9 +1,7 @@
 import xmltodict
 import os
 from tkinter import *
-#import json
 #import sqlite3
-import keyboard
 from tkinter import ttk
 
 class Table(object):
@@ -77,8 +75,6 @@ class app(Table):
         arquivos = list(filter(lambda x : x[-3:] == "xml",arquivos ))
         self.produtos = []
         
-        
-        
         for index,xml in enumerate(arquivos):
             if index >= 0:
                 self.get_info(xml)
@@ -92,40 +88,8 @@ class app(Table):
         self.codEan.bind("<Return>",self.get_key)
         self.prodDescription.bind("<Return>",self.get_key)
         
-        """    
-        while True:
-            prod = input(".:")
-            elif (prod.lower())[:3] in ["cnf","nnf"]:
-                cd_type = "cNF" if prod[:3] == "cnf" else "nNF"
-                cd_nfe = (prod[3:]).replace(" ","")
-                self.sorce_nfe(cd_type=cd_type,cd_nfe=cd_nfe)
-                continue
-            elif " AND " in prod:
-                self.AND(prod)
-                continue
-            
-            s = 0
-            
-            
-            for index,i in enumerate(self.produtos):
-                if prod in i["cEAN"] or (prod.lower() in (str(i["xProd"]).lower())) :
-                    s += 1
-                    print(i["xProd"],">> EAN:",i["cEAN"],"\t",(round(float(i["vUnCom"]),2)),"  qntd",i["qntd"],"\n","Emitente",i["emitente"],"cNFe",i["cNF"],"n.NFe",i["nNF"],"Data",i["dtEmissao"])
-                    print("Valor de venda:",format(self.calc(value=i["vUnCom"],amount=i["qntd"],cod=i["uCom"]),".2f"), f"V. Desconto {i['vDesc']}")
-                  
-                elif ((index+1) == len(self.produtos)) and (s==0):
-                    print("Codigo EAN nao encontrado")
-                else:
-                    continue
-            """ 
         self.root.mainloop()
-    
-    def inserir(self):
-        pass     
-
-    def hotkeys(self):
-        close = keyboard.add_hotkey("alt+f+4",self.root.destroy)
-    
+   
     def Frmt(self, num):
         num = float(num)
         return format(num,".2f")
@@ -283,5 +247,3 @@ class app(Table):
 if __name__ == "__main__":
     run=app()
     exit()        
-
-
