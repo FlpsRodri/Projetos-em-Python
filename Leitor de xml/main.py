@@ -19,25 +19,31 @@ class relogio(object):
             self.date.place(relx=datex,rely=datey)    
         self.relogio(time=time,date=date)
     def relogio(self,time=False,date=False):
-        tempo = datetime.now()
+        self.tempo = datetime.now()
         if time:
-            hora = tempo.strftime("%H:%M:%S")
+            hora = self.tempo.strftime("%H:%M:%S")
             self.time.config(text=hora)
             self.time.after(500, lambda:self.relogio(time=True))
             
         if date:
-            dia_semana = tempo.strftime("%A")
-            dia = tempo.day
-            mes = "0"+str(tempo.month) if tempo.month<10 else str(tempo.month) 
-            ano = tempo.strftime("%Y")
-            self.date.config(text=dia_semana + "   " + str(dia) + "/" + str(mes) + "/" + (ano))
-            if not self.time:
-                self.date.after(500, lambda:self.relogio(date=True))
+            self.get_time()
+    def get_time(self):
+        dia_semana = self.tempo.strftime("%A")
+        dia = self.tempo.day
+        mes = (f"0{str(self.tempo.month)}" if self.tempo.month < 10 else str(self.tempo.month))
+        ano = self.tempo.strftime("%Y")
+        self.date.config(text=f"{dia_semana}   {str(dia)}/{str(mes)}/{ano}")
+        if not self.time:
+            self.date.after(500, lambda:self.relogio(date=True))
             
 class Table(object):
     def __init__(self):
         pass
         
+    def filter_num(self,key):
+        kargs = "1234567890"
+        return "".join(i for i in key if i in kargs)
+    
     def window(self, master):
         
         def labels():
@@ -56,22 +62,17 @@ class Table(object):
             self.value_MinValue = Label(master, text="0,00", font=self.main_font,bg=self.main_bg,fg=self.main_fg) 
             self.value_MinValue.place(relx=0.83,rely=0.11)
         def entrys():
-            def filter_num(key):
-                kargs = "1234567890"
-                temp = ""
-                for i in key:
-                    if i in kargs: temp += i
-                return temp
+            
             def filter_cod(*args):
                 key = self.variable_cod.get()
-                self.variable_cod.set(filter_num(key))
+                self.variable_cod.set(self.filter_num(key))
             def filter_nnfe(*args):
                 key = self.variable_nnfe.get()
-                self.variable_nnfe.set(filter_num(key))
+                self.variable_nnfe.set(self.filter_num(key))
             def filter_keynfe(*arg):
                 key = self.variable_keynfe.get()
-                if len(key) < 44: self.variable_keynfe.set(filter_num(key=key))
-                else:self.variable_keynfe.set(filter_num(key=key)[:44])
+                if len(key) < 44: self.variable_keynfe.set(self.filter_num(key=key))
+                else:self.variable_keynfe.set(self.filter_num(key=key)[:44])
                 
             self.variable_cod = StringVar(master=master)
             self.variable_cod.trace("w",filter_cod)
@@ -91,37 +92,47 @@ class Table(object):
             self.entry_nnfe.place(relx=0.55, rely=0.14)
             self.entry_keynfe.place(relx=0.1,rely=0.14)
         def table():
-            colunas = ["EAN", "PRODUTO","CD", "V. UNIT", "V.DESC","QTD", "V. TOTAL", "ICMS", "FORNECEDOR", "DATA", "NCM", "N° NFE", "C. NFE"]
-            columns_geo = {"EAN":[100], "PRODUTO":[300],"CD":[30], "V. UNIT":[60], "V.DESC":[60],"QTD":[40] ,"V. TOTAL":[90], "ICMS":[60], "FORNECEDOR":[200], "DATA":[100], "NCM":[100], "N° NFE":[100], "C. NFE":[100]}
+            colunas = ["EAN", "PRODUTO","CD", "V. UNIT", "V.DESC","QTD", "U TRIB", "V. TRIB", "QTN. TRIB", "V. TOTAL", "ICMS", "FORNECEDOR", "DATA", "NCM", "N° NFE", "C. NFE"]
+            columns_geo = {"EAN":[100], "PRODUTO":[300],"CD":[30], "V. UNIT":[60], "V.DESC":[60],"QTD":[40] , "U TRIB":[35], "V. TRIB":[60], "QTN. TRIB":[40],"V. TOTAL":[90], "ICMS":[60], "FORNECEDOR":[200], "DATA":[100], "NCM":[100], "N° NFE":[100], "C. NFE":[100]}
             self.tabela = ttk.Treeview(master, columns=colunas, show="headings")
+            self.tabela.place(relx=0.01, rely=0.2, relwidth=0.97, relheight=0.6)
+            
+            vs = Scrollbar(master=master, orient="vertical", command=self.tabela.yview, width=15)
+            self.tabela.configure(yscrollcommand=vs.set)
+            vs.place(rely=0.2, relx=0.97, relheight=0.6)
+            hs = Scrollbar(master=master, orient="horizontal", command=self.tabela.xview)
+            self.tabela.configure(xscrollcommand=hs.set)
+            hs.place(rely=0.8, relx=0.01, relwidth=0.97)
+            
             for coluna in colunas:
                 self.tabela.heading(coluna, text=coluna)
                 tamanho = columns_geo[coluna][0]
                 
                 self.tabela.column(coluna, width=tamanho, minwidth=tamanho)
             
-            self.tabela.place(relx=0.01, rely=0.2, relwidth=0.98, relheight=0.6)
-            
-        labels()
-        entrys()
-        table()
+        labels(), entrys(), table()
         
-    def config(self, master):
-        self.main_bg = "#eee"
-        self.main_fg = "#000000"
-        self.main_geometry = {"height":"720","width":"1200"}
-        self.main_title = "Tabela Produtos"
-        self.main_icon = "icon.ico"
-        self.main_dataBase = "Banco_de_dados.sql"
-        self.main_title_font = "times 18 bold"
-        self.main_font = "consolas 12"
+        self.codEan.bind("<Return>",self.get_key)
+        self.prodDescription.bind("<Return>",self.get_key)
+        self.entry_nnfe.bind("<Return>",self.get_key)
+        self.entry_keynfe.bind("<Return>",self.get_key)
 
-        master.state("zoomed")
-        master["bg"] = self.main_bg
-        master.title(self.main_title)
-        master.geometry(f"{self.main_geometry['width']}x{self.main_geometry['height']}")
-        master.resizable(False,False)
-   
+    def table2(self,master):
+        #["file_name","emitente","CNPJ|CPF","@Id","Cliente", "dhEmi","nNFe","cNFe","nNF","vTotProd", "vNF","fat",{"fat","dup"},"vTotDesc"]
+        colunas = ["FORNECEDOR","DT. EMISSAO","N° NFE","V. TOTAL"]
+        columns_geo = {"FORNECEDOR":[320],"DT. EMISSAO":[90],"N° NFE":[90],"V. TOTAL":[120]}
+        self.tabela2 = ttk.Treeview(master, columns=colunas, show="headings")
+        self.tabela2.place(relx=0.1, rely=0.5, relheight=0.6)
+        
+        vs = Scrollbar(master=master, orient="vertical", command=self.tabela2.yview, width=15)
+        self.tabela2.configure(yscrollcommand=vs.set)
+        vs.place(rely=0.5, relx=0.56, relheight=0.6)
+        
+        for coluna in colunas:
+            self.tabela2.heading(coluna, text=coluna)
+            tamanho = columns_geo[coluna][0]
+            self.tabela2.column(coluna, width=tamanho, minwidth=tamanho)
+        
 class app(Table,relogio):
     
     def __init__(self):
@@ -139,19 +150,81 @@ class app(Table,relogio):
         
         self.root = Tk()
         self.config(self.root)
-        self.window(self.root)
-        self.run_clock(master=self.root,time=(True,0.85,0.96),date=(True,0.9,0.96), bg=self.main_bg, font="times 12 bold")
-        self.codEan.bind("<Return>",self.get_key)
-        self.prodDescription.bind("<Return>",self.get_key)
-        self.entry_nnfe.bind("<Return>",self.get_key)
-        self.entry_keynfe.bind("<Return>",self.get_key)
+        
+        nb = ttk.Notebook(self.root)
+        #nb.place(x=0 , y=0 , width=self.main_geometry["width"] , height=self.main_geometry["height"])
+        nb.place(relx=0, rely=0, relheight=1, relwidth=1)
+        aba1 = Frame(nb, bg=self.main_bg)
+        aba2 = Frame(nb, bg=self.main_bg)
+        
+        nb.add(aba1, text="Buscar Produtos" )
+        nb.add(aba2, text="Buscar Nota Fiscal Eletrônica")
+        
+        self.window(aba1)
+        self.window_search_nfe(master=aba2)
+        self.run_clock(master=aba1,time=(True,0.8,0.96),date=(True,0.85,0.96), bg=self.main_bg, font="times 12 bold")
+        
+        
         self.root.mainloop()
     
+    def config(self, master):
+        self.main_bg = "#ddd"
+        self.main_fg = "#000000"
+        self.main_geometry = {"height":"720","width":"1300"}
+        self.main_title = "Tabela Produtos"
+        self.main_icon = "icon.ico"
+        self.main_dataBase = "Banco_de_dados.sql"
+        self.main_title_font = "times 18 bold"
+        self.main_font = "consolas 12"
+
+        master.state("zoomed")
+        master["bg"] = self.main_bg
+        master.title(self.main_title)
+        master.geometry(f"{self.main_geometry['width']}x{self.main_geometry['height']}")
+        master.resizable(False,False)
+        
+    def window_search_nfe(self, master):
+        master_widgets = Frame(master, bg=self.main_bg)
+        master_widgets.place(relx=0, rely=0, relwidth=1, relheight=0.5)
+        def labels():
+            Label(master_widgets, text="N° Nota Fiscal",  font=self.main_font, bg=self.main_bg, fg=self.main_fg).place(relx=0.1, rely=0.05)
+            Label(master_widgets, text="Cd Nota Fiscal",  font=self.main_font, bg=self.main_bg, fg=self.main_fg).place(relx=0.3, rely=0.05)
+            Label(master_widgets, text="Fornecedor",      font=self.main_font, bg=self.main_bg, fg=self.main_fg).place(relx=0.1, rely=0.18)
+            Label(master_widgets, text="Chave de acesso", font=self.main_font, bg=self.main_bg, fg=self.main_fg).place(relx=0.1, rely=0.32)
+             
+        def entrys():
+            font = "times 12 bold"
+            self.entry_Nnf = Entry(master_widgets, bg="#F3FCA1", width=25, font=font)
+            self.entry_Cnf = Entry(master_widgets, bg="#F3FCA1", width=25, font=font)
+            self.cbb_emitent = ttk.Combobox(master_widgets,values=sorted(list(map(lambda x: x["emitente"], self.list_nfe)), key=str.upper), width=68, font=font)
+            self.entry_KeyAcess = Entry(master_widgets, bg="#F3FCA1", width=70, font=font)
+            self.entry_Nnf.place(relx=0.1, rely=0.12)
+            self.entry_Cnf.place(relx=0.3, rely=0.12)
+            self.cbb_emitent.place(relx=0.1, rely=0.25)
+            self.entry_KeyAcess.place(relx=0.1, rely=0.39)
+        
+        def buttons(): pass
+        def nfe():
+            nfe_master = Frame(master, bg=self.main_bg)
+            nfe_master.place(relx=0, rely=0.53, relwidth=1, relheight=1)
+            titleFrame = LabelFrame(nfe_master, width=260, height=80, bg=self.main_bg, bd=1)
+            titleFrame.place(rely=0, relx=0.1)
+            infoFrame = LabelFrame(nfe_master, width=120, height=80, bg=self.main_bg, bd=1)
+            infoFrame.place(rely=0,relx=0.29)
+            indFrame = LabelFrame(nfe_master, width=260, height=80, bg=self.main_bg, bd=1)
+            indFrame.place(rely=0,relx=0.375)
+            fatFrame = LabelFrame(nfe_master, text="Fatura ",width=260, height=80, bg=self.main_bg, bd=1)
+            fatFrame.place(rely=0.12,relx=0.1)
+            
+            
+        self.table2(master=master_widgets)
+        labels(), entrys(), buttons(), nfe()
+        
     def Frmt(self, num):
         num = float(num)
         return format(num,".2f")
     
-    def sorcheProd(self, prod, manage=None):
+    def searchProd(self, prod, manage=None):
         try:
             self.value_items["text"] = "0"
             self.value_MaxValue["text"] = "0,00"
@@ -195,22 +268,22 @@ class app(Table,relogio):
         not_s = True
         for index,NFe in enumerate(self.list_nfe):
             
-            if key_nfe in NFe["@Id"]:
+            if key_nfe in NFe["nNF"]:
                 not_s = False
-                self.sorcheProd(prod=NFe["nNFe"],manage="NNFe")
+                self.searchProd(prod=NFe["nNFe"],manage="NNFe")
             elif ((index + 1) == len(self.list_nfe)) and not_s:
                 messagebox.showinfo("Sem Registro", "Chave de acesso não encontrada no banco de dados")
     
     def get_key(self,event):
         if event.widget:
             if self.codEan.get() and (event.widget == self.codEan):
-                self.sorcheProd(self.codEan.get())
+                self.searchProd(self.codEan.get())
                 self.codEan.delete(0,END)
             elif self.prodDescription.get() and (event.widget == self.prodDescription):
-                self.sorcheProd(self.prodDescription.get())
+                self.searchProd(self.prodDescription.get())
                 self.prodDescription.delete(0,END)
             elif self.entry_nnfe.get() and (event.widget == self.entry_nnfe):
-                self.sorcheProd(prod=self.entry_nnfe.get(), manage="NNFe")
+                self.searchProd(prod=self.entry_nnfe.get(), manage="NNFe")
                 self.entry_nnfe.delete(0,END)
             elif self.entry_keynfe.get() and (event.widget == self.entry_keynfe):
                 if len(self.entry_keynfe.get()) == 44:
@@ -239,6 +312,14 @@ class app(Table,relogio):
         nNFe = (infos["@Id"]).replace("NFe","") if "NFe" in infos["@Id"] else infos["@Id"]
         cNFe = infos["ide"]["cNF"]
         nNFE = infos["ide"]["nNF"]
+        natOp = infos["ide"]["natOp"]
+        cobr = infos["cobr"] if "venda" in natOp.lower() else False
+        dup = (cobr["dup"] if "dup" in cobr else False) if cobr else False
+        fat = cobr["fat"] if cobr else cobr
+        vTotProd = infos["total"]["ICMSTot"]["vProd"]
+        vTotNf = infos["total"]["ICMSTot"]["vNF"]
+        vTotDesc = infos["total"]["ICMSTot"]["vDesc"]
+        
         try:emitente = {"CNPJ|CPF":infos["emit"]["CNPJ"],"nome":infos["emit"]["xNome"]}
         except: emitente = {"CNPJ|CPF":infos["emit"]["CPF"],"nome":infos["emit"]["xNome"]}
         try:cliente = {"CNPJ|CPF":infos["dest"]["CNPJ"],"nome":infos["dest"]["xNome"]}
@@ -247,7 +328,7 @@ class app(Table,relogio):
             dtEmissao = infos["ide"]["dhEmi"]
             dtEmissao  = (dtEmissao.split("T"))[0]
         else : dtEmissao  = 0
-        nfe = {"file_name":file_name,"emitente":emitente["nome"],"CNPJ|CPF":emitente["CNPJ|CPF"],"@Id":nNFe,"Cliente":cliente["nome"], "dhEmi":dtEmissao,"nNFe":nNFE,"cNFe":cNFe}
+        nfe = {"file_name":file_name,"emitente":emitente["nome"],"CNPJ|CPF":emitente["CNPJ|CPF"],"Cliente":cliente["nome"], "dhEmi":dtEmissao,"nNFe":nNFE,"cNFe":cNFe,"nNF":nNFe,"vTotProd":vTotProd, "vNF":vTotNf,"fat":{"fat":fat,"dup":dup},"vTotDesc":vTotDesc}
         self.list_nfe.append(nfe)
         
         def add_prod(prod,icmsInclude,imposto):
@@ -256,12 +337,12 @@ class app(Table,relogio):
                 desc = desc - float(prod["vDesc"])
                 desc = (round(desc / float(prod["qCom"]),2))
             else: desc = 0
-            if icmsInclude:
-                valueIcms = imposto["vTotTrib"] if "vTotTrib" in imposto else 0
+            if icmsInclude: valueIcms = imposto["vTotTrib"] if "vTotTrib" in imposto else 0
             else: valueIcms = 0 
             NCM = prod["NCM"] if "NCM" in prod else "0"
-            #["EAN", "PRODUTO","CD", "V. UNIT", "V.DESC","QTD", "V. TOTAL", "ICMS", "FORNECEDOR", "DATA", "NCM", "N° NFE", "C. NFE"]
-            prod = {"cEAN":str(prod["cEAN"]),"xProd":prod["xProd"],"uCom":prod["uCom"],"vUnCom":self.Frmt(prod["vUnCom"]),"vDesc": self.Frmt(desc),"qntd":prod["qCom"],"vProd":self.Frmt(prod["vProd"]),"icms":self.Frmt(valueIcms),"emitente":emitente["nome"], "dtEmissao":dtEmissao,"NCM":NCM,"nNF":nNFE,"cNF":cNFe}
+            peso = "0.00"
+            
+            prod = {"cEAN":str(prod["cEAN"]),"xProd":prod["xProd"],"uCom":prod["uCom"],"vUnCom":self.Frmt(prod["vUnCom"]),"vDesc": self.Frmt(desc),"qntd":self.Frmt(prod["qCom"]),"uTrib":prod["uTrib"], "vUnTrib":self.Frmt(prod["vUnTrib"]), "qTrib":self.Frmt(prod["qTrib"]), "vProd":self.Frmt(prod["vProd"]),"icms":self.Frmt(valueIcms),"emitente":emitente["nome"], "dtEmissao":dtEmissao,"NCM":NCM,"nNF":nNFE,"cNF":cNFe}
             self.produtos.append(prod)
         
         def icms():
