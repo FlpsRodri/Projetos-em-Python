@@ -4,6 +4,8 @@ from tkinter import *
 #import sqlite3
 from tkinter import ttk,messagebox
 from datetime import datetime
+import pyperclip
+import keyboard
 
 class relogio(object):
     def __init__(self):
@@ -45,27 +47,28 @@ class Table(object):
         return "".join(i for i in key if i in kargs)
     
     def window(self, master):
+        Style = ttk.Style()
+        Style.configure("Treeview",font=("Times",11))
+        self.cb_descriptionVar = IntVar(master=master,value=0)
+        self.cb_description = Checkbutton(master=master, text="Descrição exata", variable=self.cb_descriptionVar, bg=self.main_bg,fg=self.main_fg, command=lambda:print(self.cb_descriptionVar.get()))
+        self.cb_description.place(relx=0.06,rely=0.08)
         
         def labels():
-            Label(master, text="cod",font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.1,rely=0.05)
-            Label(master, text="Descrição do produto",font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.25,rely=0.05)
-            Label(master, text="N° NF-e", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.55,rely=0.11)
-            Label(master, text="Chave de Acesso (44 digitos)", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.1,rely=0.11)
-            Label(master, text='Experimente utilizar o Filtro "AND"',font=self.main_font,bg=self.main_bg,fg="#ccf").place(relx=0.3,rely=0.17)
-            Label(master, text="Items: ", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.73,rely=0.05)
-            Label(master, text="Maior Valor: ", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.73,rely=0.08)
-            Label(master, text="Menor Valor: ", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.73,rely=0.11)
+            Label(master, text="GTIN / Descrição do produto",font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.05,rely=0.02)
+            Label(master, text="N° NF-e", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.4,rely=0.11)
+            Label(master, text="Chave de Acesso (44 digitos)", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.05,rely=0.11)
+            Label(master, text="Items: ", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.63,rely=0.05)
+            Label(master, text="Maior Valor: ", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.63,rely=0.08)
+            Label(master, text="Menor Valor: ", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.63,rely=0.11)
+            Label(master,text="Exibir", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.63,rely=0.14)
             self.value_items = Label(master, text="0", font=self.main_font,bg=self.main_bg,fg=self.main_fg)
-            self.value_items.place(relx=0.83,rely=0.05)
+            self.value_items.place(relx=0.73,rely=0.05)
             self.value_MaxValue = Label(master, text="0,00", font=self.main_font,bg=self.main_bg,fg=self.main_fg) 
-            self.value_MaxValue.place(relx=0.83,rely=0.08)
+            self.value_MaxValue.place(relx=0.73,rely=0.08)
             self.value_MinValue = Label(master, text="0,00", font=self.main_font,bg=self.main_bg,fg=self.main_fg) 
-            self.value_MinValue.place(relx=0.83,rely=0.11)
+            self.value_MinValue.place(relx=0.73,rely=0.11)
         def entrys():
             
-            def filter_cod(*args):
-                key = self.variable_cod.get()
-                self.variable_cod.set(self.filter_num(key))
             def filter_nnfe(*args):
                 key = self.variable_nnfe.get()
                 self.variable_nnfe.set(self.filter_num(key))
@@ -74,27 +77,26 @@ class Table(object):
                 if len(key) < 44: self.variable_keynfe.set(self.filter_num(key=key))
                 else:self.variable_keynfe.set(self.filter_num(key=key)[:44])
                 
-            self.variable_cod = StringVar(master=master)
-            self.variable_cod.trace("w",filter_cod)
             self.variable_nnfe = StringVar(master=master)
             self.variable_nnfe.trace("w",filter_nnfe)
             self.variable_keynfe = StringVar(master=master)
             self.variable_keynfe.trace("w",filter_keynfe)
             
-            self.codEan = Entry(master, bg="#F3FCA1", textvariable=self.variable_cod)
             self.prodDescription = Entry(master, bg="#F3FCA1", width=100)
-            self.entry_keynfe = Entry(master, bg="#F3FCA1", textvariable=self.variable_keynfe, width=70, font="times 12 bold")
+            self.entry_keynfe = Entry(master, bg="#F3FCA1", textvariable=self.variable_keynfe, width=50, font="times 12 bold")
             self.entry_nnfe = Entry(master, bg="#F3FCA1", textvariable=self.variable_nnfe)
             
-            self.codEan.focus()
-            self.codEan.place(relx=0.1, rely=0.08)
-            self.prodDescription.place(relx=0.25, rely=0.08)
-            self.entry_nnfe.place(relx=0.55, rely=0.14)
-            self.entry_keynfe.place(relx=0.1,rely=0.14)
+            self.prodDescription.focus()
+            #self.codEan.place(relx=0.1, rely=0.08)
+            #self.prodDescription.place(relx=0.25, rely=0.08)
+            self.prodDescription.place(relx=0.05, rely=0.055)
+            self.entry_keynfe.place(relx=0.05,rely=0.14)
+            self.entry_nnfe.place(relx=0.4, rely=0.14)
+            
         def table():
             colunas = ["EAN", "PRODUTO","CD", "V. UNIT", "V.DESC","QTD", "U TRIB", "V. TRIB", "QTN. TRIB", "V. TOTAL", "ICMS", "FORNECEDOR", "DATA", "NCM", "N° NFE", "C. NFE"]
-            columns_geo = {"EAN":[100], "PRODUTO":[300],"CD":[30], "V. UNIT":[60], "V.DESC":[60],"QTD":[40] , "U TRIB":[35], "V. TRIB":[60], "QTN. TRIB":[40],"V. TOTAL":[90], "ICMS":[60], "FORNECEDOR":[200], "DATA":[100], "NCM":[100], "N° NFE":[100], "C. NFE":[100]}
-            self.tabela = ttk.Treeview(master, columns=colunas, show="headings")
+            columns_geo = {"EAN":[100], "PRODUTO":[360],"CD":[30], "V. UNIT":[60], "V.DESC":[60],"QTD":[40] , "U TRIB":[35], "V. TRIB":[60], "QTN. TRIB":[40],"V. TOTAL":[90], "ICMS":[60], "FORNECEDOR":[200], "DATA":[100], "NCM":[100], "N° NFE":[100], "C. NFE":[100]}
+            self.tabela = ttk.Treeview(master, columns=colunas, show="headings", style="Treeview")
             self.tabela.place(relx=0.01, rely=0.2, relwidth=0.97, relheight=0.6)
             
             vs = Scrollbar(master=master, orient="vertical", command=self.tabela.yview, width=15)
@@ -112,26 +114,76 @@ class Table(object):
             
         labels(), entrys(), table()
         
-        self.codEan.bind("<Return>",self.get_key)
+        #self.codEan.bind("<Return>",self.get_key)
         self.prodDescription.bind("<Return>",self.get_key)
         self.entry_nnfe.bind("<Return>",self.get_key)
         self.entry_keynfe.bind("<Return>",self.get_key)
 
     def table2(self,master):
         #["file_name","emitente","CNPJ|CPF","@Id","Cliente", "dhEmi","nNFe","cNFe","nNF","vTotProd", "vNF","fat",{"fat","dup"},"vTotDesc"]
+        def select(*args):
+            
+            item = self.tabela2.selection()[0]
+            nfe = self.nfeInTable[(self.tabela2.get_children()).index(item)]
+            self.viewResultTable2(nfe)
+            
         colunas = ["FORNECEDOR","DT. EMISSAO","N° NFE","V. TOTAL"]
         columns_geo = {"FORNECEDOR":[320],"DT. EMISSAO":[90],"N° NFE":[90],"V. TOTAL":[120]}
         self.tabela2 = ttk.Treeview(master, columns=colunas, show="headings")
-        self.tabela2.place(relx=0.1, rely=0.5, relheight=0.6)
-        
+        self.tabela2.place(relx=0.1, rely=0.5, relheight=0.48)
+        self.tabela2.bind("<Double-Button-1>",select)
+        self.tabela2.bind("<Return>",select)
         vs = Scrollbar(master=master, orient="vertical", command=self.tabela2.yview, width=15)
         self.tabela2.configure(yscrollcommand=vs.set)
-        vs.place(rely=0.5, relx=0.56, relheight=0.6)
+        vs.place(rely=0.5, relx=0.8 ,relheight=0.48)
         
         for coluna in colunas:
             self.tabela2.heading(coluna, text=coluna)
             tamanho = columns_geo[coluna][0]
             self.tabela2.column(coluna, width=tamanho, minwidth=tamanho)
+    
+    def InsertOnTable2(self,keyAgr,key):
+        
+        #columns : "FORNECEDOR","DT. EMISSAO","N° NFE","V. TOTAL"
+        try: self.tabela2.delete(*self.tabela2.get_children())
+        except Exception: pass
+        
+        amount = 0
+        self.nfeInTable = []
+        for nfe in self.list_nfe:
+            if keyAgr == nfe[key]:
+                amount += 1
+                self.nfeInTable.append(nfe)
+                dicNfe = nfe
+                values = [nfe["emitente"],nfe["dhEmi"],nfe["nNFe"],nfe["vNF"]]
+                self.tabela2.insert("",END,values=values)
+        if amount == 1:
+            self.viewResultTable2(dicNfe)
+        else: dicNfe = None
+        
+    def viewResultTable2(self,nfe):
+        #nfe = {"emitente":emitente["nome"],"CNPJ|CPF":emitente["CNPJ|CPF"],"Cliente":cliente["nome"], 
+        # "dhEmi":dtEmissao,"nNFe":nNFE,"cNFe":cNFe,"nNF":nNFe,"vTotProd":vTotProd, "vNF":vTotNf,
+        # "fat":{"fat":fat,"dup":dup},"vTotDesc":vTotDesc}
+        pyperclip.copy(nfe["nNF"])
+        self.lblFornecedor["text"] = nfe["emitente"]
+        self.lblDest["text"] = nfe["Cliente"]
+        self.lblNatOp["text"] = nfe["natOp"]
+        
+        self.lblNNf["text"] = nfe["nNFe"]
+        self.lblCdNf["text"] = nfe["cNFe"]
+        self.lblDtEmi["text"] = nfe["dhEmi"]
+        
+        self.lblKeyAcess["text"] = nfe["nNF"]
+        self.lblVlProd["text"] = nfe["vTotProd"]
+        self.VlNf["text"] = nfe["vNF"]
+        
+        #fatFrame = LabelFrame(nfe_master, text="Fatura ",width=260, height=80, bg=self.main_bg, bd=1)
+        #fatFrame.place(rely=0.17,relx=0.1, width=640, height=122)
+    
+    def Frmt(self, num):
+        num = float(num)
+        return format(num,".2f")
         
 class app(Table,relogio):
     
@@ -142,11 +194,9 @@ class app(Table,relogio):
         self.produtos = []
         self.list_nfe = []
         
-        for index,xml in enumerate(arquivos):
-            if index >= 0:
-                self.get_info(xml)
-            else:
-                break
+        for xml in arquivos:
+            self.get_info(xml)
+            
         
         self.root = Tk()
         self.config(self.root)
@@ -163,9 +213,14 @@ class app(Table,relogio):
         self.window(aba1)
         self.window_search_nfe(master=aba2)
         self.run_clock(master=aba1,time=(True,0.8,0.96),date=(True,0.85,0.96), bg=self.main_bg, font="times 12 bold")
-        
+        self.hotkeys()
         
         self.root.mainloop()
+    
+    def hotkeys(self):
+        def st():
+            keyboard.press("shift+tab")
+        shitReturnt = keyboard.add_hotkey("shift+return",st)
     
     def config(self, master):
         self.main_bg = "#ddd"
@@ -184,53 +239,90 @@ class app(Table,relogio):
         master.resizable(False,False)
         
     def window_search_nfe(self, master):
+        master = LabelFrame(master, width=900)
+        master.pack(anchor=CENTER,fill=Y,expand=Y)
         master_widgets = Frame(master, bg=self.main_bg)
-        master_widgets.place(relx=0, rely=0, relwidth=1, relheight=0.5)
+        master_widgets.place(relx=0, rely=0, relwidth=1, relheight=0.55)
         def labels():
             Label(master_widgets, text="N° Nota Fiscal",  font=self.main_font, bg=self.main_bg, fg=self.main_fg).place(relx=0.1, rely=0.05)
-            Label(master_widgets, text="Cd Nota Fiscal",  font=self.main_font, bg=self.main_bg, fg=self.main_fg).place(relx=0.3, rely=0.05)
+            Label(master_widgets, text="Cd Nota Fiscal",  font=self.main_font, bg=self.main_bg, fg=self.main_fg).place(relx=0.5, rely=0.05)
             Label(master_widgets, text="Fornecedor",      font=self.main_font, bg=self.main_bg, fg=self.main_fg).place(relx=0.1, rely=0.18)
             Label(master_widgets, text="Chave de acesso", font=self.main_font, bg=self.main_bg, fg=self.main_fg).place(relx=0.1, rely=0.32)
              
         def entrys():
+            
             font = "times 12 bold"
             self.entry_Nnf = Entry(master_widgets, bg="#F3FCA1", width=25, font=font)
             self.entry_Cnf = Entry(master_widgets, bg="#F3FCA1", width=25, font=font)
-            self.cbb_emitent = ttk.Combobox(master_widgets,values=sorted(list(map(lambda x: x["emitente"], self.list_nfe)), key=str.upper), width=68, font=font)
-            self.entry_KeyAcess = Entry(master_widgets, bg="#F3FCA1", width=70, font=font)
+            values = list(map(lambda x: x["emitente"], self.list_nfe))
+            values = sorted(set(values), key=str.upper)
+            self.cbb_emitent = ttk.Combobox(master_widgets,values=values, width=68, font=font)
+            self.keyAcessVar = StringVar()
+            self.entry_KeyAcess = Entry(master_widgets,textvariable=self.keyAcessVar, bg="#F3FCA1", width=70, font=font)
             self.entry_Nnf.place(relx=0.1, rely=0.12)
-            self.entry_Cnf.place(relx=0.3, rely=0.12)
+            self.entry_Cnf.place(relx=0.5, rely=0.12)
             self.cbb_emitent.place(relx=0.1, rely=0.25)
             self.entry_KeyAcess.place(relx=0.1, rely=0.39)
+            self.entry_Nnf.bind("<Return>",self.get_key)
+            self.entry_Cnf.bind("<Return>",self.get_key)
+            self.cbb_emitent.bind("<Return>",self.get_key)
+            self.entry_KeyAcess.bind("<Return>",self.get_key)
         
-        def buttons(): pass
         def nfe():
+            def filter(*args):
+                pass
+            
+            font = "consolas 10 bold"
             nfe_master = Frame(master, bg=self.main_bg)
-            nfe_master.place(relx=0, rely=0.53, relwidth=1, relheight=1)
-            titleFrame = LabelFrame(nfe_master, width=260, height=80, bg=self.main_bg, bd=1)
-            titleFrame.place(rely=0, relx=0.1)
+            nfe_master.place(relx=0, rely=0.55, relwidth=1, relheight=1)
+            titleFrame = LabelFrame(nfe_master, width=290, height=80, bg=self.main_bg, bd=1)
+            titleFrame.place(rely=0, relx=0.05, width=260, height=122)
+            Label(titleFrame,text="Fornecedor", bg=self.main_bg, fg=self.main_fg, font=font,anchor=W).pack(anchor=W)
+            self.lblFornecedor = Label(titleFrame,text="", bg=self.main_bg, fg=self.main_fg, font=font)
+            self.lblFornecedor.pack(anchor=W)
+            Label(titleFrame,text="Destinatario", bg=self.main_bg, fg=self.main_fg, font=font).pack(anchor=W)
+            self.lblDest = Label(titleFrame,text="", bg=self.main_bg, fg=self.main_fg, font=font)
+            self.lblDest.pack(anchor=W)
+            Label(titleFrame,text="Nat. da Operação", bg=self.main_bg, fg=self.main_fg, font=font).pack(anchor=W)
+            self.lblNatOp = Label(titleFrame,text="", bg=self.main_bg, fg=self.main_fg, font=font)
+            self.lblNatOp.pack(anchor=W)
+            
             infoFrame = LabelFrame(nfe_master, width=120, height=80, bg=self.main_bg, bd=1)
-            infoFrame.place(rely=0,relx=0.29)
+            infoFrame.place(rely=0,relx=0.34, width=120, height=122)
+            Label(infoFrame,text="N° NF-e", bg=self.main_bg, fg=self.main_fg, font=font).pack(anchor=W)
+            self.lblNNf = Label(infoFrame,text="", bg=self.main_bg, fg=self.main_fg, font=font)
+            self.lblNNf.pack(anchor=W)
+            Label(infoFrame,text="Cd. NF-e", bg=self.main_bg, fg=self.main_fg, font=font).pack(anchor=W)
+            self.lblCdNf = Label(infoFrame,text="", bg=self.main_bg, fg=self.main_fg, font=font)
+            self.lblCdNf.pack(anchor=W)
+            Label(infoFrame,text="Dt. Emis.", bg=self.main_bg, fg=self.main_fg, font=font).pack(anchor=W)
+            self.lblDtEmi = Label(infoFrame,text="", bg=self.main_bg, fg=self.main_fg, font=font)
+            self.lblDtEmi.pack(anchor=W)
+            
             indFrame = LabelFrame(nfe_master, width=260, height=80, bg=self.main_bg, bd=1)
-            indFrame.place(rely=0,relx=0.375)
+            indFrame.place(rely=0,relx=0.475, width=340, height=122)
+            Label(indFrame,text="Chave de Acesso", bg=self.main_bg, fg=self.main_fg, font=font).pack(anchor=W)
+            self.lblKeyAcess = Label(indFrame,text="", bg=self.main_bg, fg=self.main_fg, font=font)
+            self.lblKeyAcess.pack(anchor=W)
+            Label(indFrame,text="Valor dos Produtos", bg=self.main_bg, fg=self.main_fg, font=font).pack(anchor=W)
+            self.lblVlProd = Label(indFrame,text="", bg=self.main_bg, fg=self.main_fg, font=font)
+            self.lblVlProd.pack(anchor=W)
+            Label(indFrame,text="Valor da Nota", bg=self.main_bg, fg=self.main_fg, font=font).pack(anchor=W)
+            self.VlNf = Label(indFrame,text="", bg=self.main_bg, fg=self.main_fg, font=font)
+            self.VlNf.pack(anchor=W)
+            
             fatFrame = LabelFrame(nfe_master, text="Fatura ",width=260, height=80, bg=self.main_bg, bd=1)
-            fatFrame.place(rely=0.12,relx=0.1)
-            
-            
-        self.table2(master=master_widgets)
-        labels(), entrys(), buttons(), nfe()
+            fatFrame.place(relx=0.05, rely=0.17, width=722, height=122)
         
-    def Frmt(self, num):
-        num = float(num)
-        return format(num,".2f")
-    
+        self.table2(master=master_widgets)
+        labels(), entrys(), nfe()
+        
     def searchProd(self, prod, manage=None):
-        try:
-            self.value_items["text"] = "0"
-            self.value_MaxValue["text"] = "0,00"
-            self.value_MinValue ["text"] = "0,00"
-            self.tabela.delete(*self.tabela.get_children())
-        except Exception as error: print(error)
+        
+        self.value_items["text"] = "0"
+        self.value_MaxValue["text"] = "0,00"
+        self.value_MinValue ["text"] = "0,00"
+        self.tabela.delete(*self.tabela.get_children())
         self.count,self.max,self.min = 0,0,0
         def calc_info(value):
             value = float(self.Frmt(value))
@@ -238,11 +330,11 @@ class app(Table,relogio):
             self.max = value if value > self.max else self.max
             if self.min == 0: self.min = value
             elif value < self.min: self.min = value 
-        if "AND" in prod:
-            values = prod.split(" AND ")
+        if self.cb_descriptionVar.get():
+            values = prod.split(" ")
             def check_and(keys,words):
                 for key in keys:
-                    if key not in words.lower():
+                    if key.lower() not in words.lower():
                         return False
                 return True
             for i in self.produtos:
@@ -255,16 +347,17 @@ class app(Table,relogio):
                 if prod == i["nNF"]:
                     self.tabela.insert("",END,values=list(i.values()))
                     calc_info(i["vUnCom"])
-        else:           
+        
+        else:
             for i in self.produtos:
-                if prod in i["cEAN"] or (prod.lower() in (str(i["xProd"]).lower())) :
+                if (prod.lower() in str(i["xProd"]).lower()) or (prod in str(i["cEAN"])):
                     self.tabela.insert("",END,values=list(i.values()))
                     calc_info(i["vUnCom"])
         self.value_items["text"], self.value_MaxValue["text"], self.value_MinValue ["text"] = self.count, self.max, self.min
                     
     def sorcheNFe(self,key_nfe):
         try: self.tabela.delete(*self.tabela.get_children())
-        except Exception as error: print(error)
+        except Exception: pass
         not_s = True
         for index,NFe in enumerate(self.list_nfe):
             
@@ -275,13 +368,14 @@ class app(Table,relogio):
                 messagebox.showinfo("Sem Registro", "Chave de acesso não encontrada no banco de dados")
     
     def get_key(self,event):
-        if event.widget:
-            if self.codEan.get() and (event.widget == self.codEan):
-                self.searchProd(self.codEan.get())
-                self.codEan.delete(0,END)
-            elif self.prodDescription.get() and (event.widget == self.prodDescription):
-                self.searchProd(self.prodDescription.get())
+        if not event.widget.get():
+            event.widget.tk_focusNext().focus()
+        elif event.widget in (self.prodDescription, self.entry_nnfe, self.entry_keynfe):
+            pyperclip.copy(event.widget.get())
+            if event.widget == self.prodDescription :
+                self.searchProd(event.widget.get())
                 self.prodDescription.delete(0,END)
+                
             elif self.entry_nnfe.get() and (event.widget == self.entry_nnfe):
                 self.searchProd(prod=self.entry_nnfe.get(), manage="NNFe")
                 self.entry_nnfe.delete(0,END)
@@ -291,19 +385,34 @@ class app(Table,relogio):
                     self.entry_keynfe.delete(0,END)
                 else: messagebox.showerror("Chave Inválida", "CHAVE INVÁLIDA\n Verifique o codigo e tente novamente.")
                 self.entry_nnfe.delete(0,END)
-            else:
-                event.widget.tk_focusNext().focus()  # Mudar o foco para o segundo campo de entrada
+           
+                  # Mudar o foco para o segundo campo de entrada
+        elif event.widget in (self.entry_Nnf, self.entry_Cnf, self.cbb_emitent, self.entry_KeyAcess):
+            pyperclip.copy(event.widget.get())
+            if event.widget.get():
+                value = event.widget.get()
+                if event.widget == self.entry_Nnf: 
+                    self.entry_Nnf.delete(0,END)
+                    key = "nNFe"
+                elif event.widget == self.entry_Cnf: 
+                    self.entry_Cnf.delete(0,END)
+                    key = "cNFe"
+                elif event.widget == self.cbb_emitent: key = "emitente"
+                else: 
+                    self.entry_KeyAcess.delete(0,END)
+                    key = "nNF"
+                self.InsertOnTable2(keyAgr=value,key=key)
     
     def get_info(self,file_name):
         arquivo = f"NFE\{file_name}"
         with open(arquivo,"rb") as xml:
             dict_xml = xmltodict.parse(xml)
         try:
-            return self._extracted_from_get_info_6(dict_xml,file_name)
+            return self._extracted_from_get_info_6(dict_xml)
         except Exception as ERROR:
             print(ERROR)
 
-    def _extracted_from_get_info_6(self, dict_xml,file_name):
+    def _extracted_from_get_info_6(self, dict_xml):
         if "NFe" in dict_xml:
             infos = dict_xml["NFe"]["infNFe"]
         elif "nfeProc" in dict_xml:
@@ -313,22 +422,27 @@ class app(Table,relogio):
         cNFe = infos["ide"]["cNF"]
         nNFE = infos["ide"]["nNF"]
         natOp = infos["ide"]["natOp"]
-        cobr = infos["cobr"] if "venda" in natOp.lower() else False
-        dup = (cobr["dup"] if "dup" in cobr else False) if cobr else False
-        fat = cobr["fat"] if cobr else cobr
-        vTotProd = infos["total"]["ICMSTot"]["vProd"]
-        vTotNf = infos["total"]["ICMSTot"]["vNF"]
-        vTotDesc = infos["total"]["ICMSTot"]["vDesc"]
-        
         try:emitente = {"CNPJ|CPF":infos["emit"]["CNPJ"],"nome":infos["emit"]["xNome"]}
         except: emitente = {"CNPJ|CPF":infos["emit"]["CPF"],"nome":infos["emit"]["xNome"]}
         try:cliente = {"CNPJ|CPF":infos["dest"]["CNPJ"],"nome":infos["dest"]["xNome"]}
         except: cliente = {"CNPJ|CPF":infos["dest"]["CPF"],"nome":infos["dest"]["xNome"]}
+        try:
+            cobr = infos["cobr"] if "venda" in natOp.lower() else False
+            dup = (cobr["dup"] if "dup" in cobr else False) if cobr else False
+            fat = cobr["fat"] if cobr else cobr
+        except Exception as error: 
+            fat = infos["pag"]
+            dup = 0
+            print(infos.keys(), "\t", error,emitente, nNFe)
+        vTotProd = infos["total"]["ICMSTot"]["vProd"]
+        vTotNf = infos["total"]["ICMSTot"]["vNF"]
+        vTotDesc = infos["total"]["ICMSTot"]["vDesc"]
+        
         if "dhEmi" in infos["ide"]:
             dtEmissao = infos["ide"]["dhEmi"]
             dtEmissao  = (dtEmissao.split("T"))[0]
         else : dtEmissao  = 0
-        nfe = {"file_name":file_name,"emitente":emitente["nome"],"CNPJ|CPF":emitente["CNPJ|CPF"],"Cliente":cliente["nome"], "dhEmi":dtEmissao,"nNFe":nNFE,"cNFe":cNFe,"nNF":nNFe,"vTotProd":vTotProd, "vNF":vTotNf,"fat":{"fat":fat,"dup":dup},"vTotDesc":vTotDesc}
+        nfe = {"emitente":emitente["nome"],"CNPJ|CPF":emitente["CNPJ|CPF"],"Cliente":cliente["nome"],"natOp":natOp, "dhEmi":dtEmissao,"nNFe":nNFE,"cNFe":cNFe,"nNF":nNFe,"vTotProd":vTotProd, "vNF":vTotNf,"fat":{"fat":fat,"dup":dup},"vTotDesc":vTotDesc}
         self.list_nfe.append(nfe)
         
         def add_prod(prod,icmsInclude,imposto):
@@ -376,6 +490,7 @@ class app(Table,relogio):
         os.system(f'NFE\{key}')
         
     def calc(self,value,amount,cod):
+        # print(list(i for i,c in enumerate(a) if c == "x"))     #exemplo para uso de generator
         try:
             value=float(value)
             amount=float(amount)
