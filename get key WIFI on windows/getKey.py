@@ -45,7 +45,7 @@ class app():
                     for i in reversed(ssid):
                         if i == " ": ssid.replace(i,"")
                         else: return ssid[1:]
-        os.system('netsh wlan show profile | find ":" > rd.txt')
+        os.system('netsh wlan show profile > rd.txt')
         time.sleep(1)
         try:
             with open("rd.txt","r") as rd:
@@ -56,13 +56,14 @@ class app():
         #os.system('del rd.txt')
         self.SSID_list = []
         for i in rd:
-            i = i.split(":")
-            if len(i[-1]) > 0:
-                i = filter_ssid(i[-1])
-                self.SSID_list.append(i)
+            if " : " in i: 
+                i = i.split(":")
+                if len(i[-1]) > 0:
+                    i = filter_ssid(i[-1])
+                    self.SSID_list.append(i)
     def hacKey(self,ssid,lang):
         if lang == "pt":
-            command = f'netsh wlan show profile "{ssid}" key=clear | find /i "chave" > temp.txt' 
+            command = f'netsh wlan show profile "{ssid}" key=clear > temp.txt' 
             os.system(command)
             with open("temp.txt","r") as temp:
                 temp = str(temp.read()).replace(" ","")

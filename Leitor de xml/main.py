@@ -1,15 +1,151 @@
 import xmltodict
 import os
 from tkinter import *
-#import sqlite3
+import sqlite3
 from tkinter import ttk,messagebox
 from datetime import datetime
 import pyperclip
 import keyboard
+import json
+
+class Db(object):
+    def __init__(self):
+        #bd=Db()
+        #bd.start("Teste.sql","teste")
+        #Db().createBank("Teste.sql","Teste",["Coluna_a","coluna_b"])
+        #bd.Insert(["coluna_a","coluna_b"],["felipe", "teste3"])
+        #bd.Update(["coluna_a","coluna_b"],["zack","Null"],1)
+        #bd.Delete("coluna_a = 'felipe' AND coluna_b = 'teste1'")
+        #print(bd.consultDB())
+        pass
+    
+    def checkDb(self,db):
+        try:
+            with open(db,'r'):
+                return True
+        except Exception : return False
+
+    def start(self,db,table):
+        if self.checkDb(db):
+            self.db=db
+            self.table = table
+            self.connect_db()
+            
+        else: 
+            print("DB not found")
+            return False
+        
+    def connect_db(self):
+        try:
+            self.bank = sqlite3.connect(self.db)
+            self.cursor = self.bank.cursor()
+        except Exception as ERROR: 
+            return ERROR
+        
+    def createBank(self, bank_name, table,columns):
+        try:
+            self.bank = sqlite3.connect(bank_name)
+            self.cursor = self.bank.cursor()
+            self.columns = columns
+            columnsName = columns
+            _temp =""
+            for i in columns:
+                _temp += i +" TEXT(1000),"
+            columns = _temp[:-1]
+            columns ="id integer primary key autoincrement, " + columns
+            self.cursor.execute(f"create table if not exists {table} ({columns}) ")
+            self.bank.commit()
+            self.start(bank_name,table)
+            if len(self.consultDB()) == 0:
+                _temp="" 
+                for index,i in enumerate(columnsName):
+                    if (index+1) != len(columnsName):
+                        _temp += i + ", "
+                    else:
+                        _temp += i 
+                columnsName = _temp
+                
+                if not len(self.consultDB()) > 0:
+                    values = ("Null, " * len(columnsName.split(",")))[:-2]
+                    self.cursor.execute(f"INSERT INTO {table} ({columnsName}) VALUES ({values})")
+                    self.bank.commit()
+            self.closeDB()
+                
+        except Exception as ERROR: return ERROR    
+
+    def consultDB(self, table="main",key="*", keys_return="Columns_in_format_list"):
+        try:
+            table = self.table if table == "main" else table
+            self.cursor.execute(f"SELECT {key} FROM {table}")
+            #print()
+            #print(type(keys_return),"'list'")
+            if "list" in str(type(keys_return)):
+                list_dict=[]
+                for produto in self.cursor.fetchall():
+                    if produto[0] == 1: continue
+                    produto = produto[1:]
+                    _temp={}
+                    for _index,_key in enumerate(keys_return):
+                        _temp[_key] = produto[_index]
+                    list_dict.append(_temp)
+                return list_dict
+            else: 
+                return self.cursor.fetchall()
+        except Exception as ERROR: return ERROR
+        
+    def Insert(self,columns,values,table="main"):
+        try:
+            _list = []
+            table = self.table if table == "main" else table
+            for index,column in enumerate(columns):
+                if len(columns) != (index + 1):
+                    _list.append( column + ",")
+                else:
+                    _list.append( column)
+            columns = ""
+            for i in _list: columns+=i
+            _temp=""
+            for i in values:
+                i = i.replace(",","_")
+                _temp+=("'"+i+"',")
+            values = (_temp[:-1]).replace('"',"")
+            values = json.dumps(values)
+            print(values)
+            self.cursor.execute(f"INSERT INTO {table} ({columns}) VALUES ("+values+")")
+            self.bank.commit()
+        except Exception as ERROR: 
+            print(ERROR)
+            return ERROR
+                
+    def Update(self,columns, values, whereID):
+        try:
+            _list = []
+            
+            for index,column in enumerate(columns):
+                if len(columns) != (index + 1):
+                    _list.append( column + "=" + (f"'{values[index]}'") + ",")
+                else:
+                    _list.append( column + "=" + (f"'{values[index]}'"))
+            columns = ""
+            for i in _list: 
+                columns +=i
+            print(columns)
+            self.cursor.execute(f"UPDATE {self.table} SET {columns} WHERE id = {whereID}")
+            self.bank.commit()
+        except Exception as ERROR: return ERROR
+            
+    def Delete(self,where):
+        if not "=" in str(where): return False  
+        self.cursor.execute(f"DELETE FROM {self.table} WHERE {where}")
+        self.bank.commit()
+    
+    def closeDB(self):
+        self.bank.close()
 
 class relogio(object):
     def __init__(self):
         pass
+    
     def run_clock(self,master,time=(False,0,0), date=(False,0,0), font=None, bg="white", fg="black"):
         time,timex,timey = time[0], time[1], time[2]
         date,datex,datey = date[0], date[1], date[2]
@@ -20,21 +156,23 @@ class relogio(object):
             self.date = Label(master,  font=font, bg=bg, fg=fg)
             self.date.place(relx=datex,rely=datey)    
         self.relogio(time=time,date=date)
+    
     def relogio(self,time=False,date=False):
         self.tempo = datetime.now()
         if time:
+            
             hora = self.tempo.strftime("%H:%M:%S")
             self.time.config(text=hora)
             self.time.after(500, lambda:self.relogio(time=True))
             
         if date:
             self.get_time()
+    
     def get_time(self):
-        dia_semana = self.tempo.strftime("%A")
         dia = self.tempo.day
         mes = (f"0{str(self.tempo.month)}" if self.tempo.month < 10 else str(self.tempo.month))
         ano = self.tempo.strftime("%Y")
-        self.date.config(text=f"{dia_semana}   {str(dia)}/{str(mes)}/{ano}")
+        self.date.config(text=f" {str(dia)}/{str(mes)}/{ano}")
         if not self.time:
             self.date.after(500, lambda:self.relogio(date=True))
             
@@ -54,19 +192,24 @@ class Table(object):
         self.cb_description.place(relx=0.06,rely=0.08)
         
         def labels():
+            self.value_items = StringVar(master)
+            
             Label(master, text="GTIN / Descrição do produto",font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.05,rely=0.02)
             Label(master, text="N° NF-e", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.4,rely=0.11)
             Label(master, text="Chave de Acesso (44 digitos)", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.05,rely=0.11)
             Label(master, text="Items: ", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.63,rely=0.05)
             Label(master, text="Maior Valor: ", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.63,rely=0.08)
             Label(master, text="Menor Valor: ", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.63,rely=0.11)
-            Label(master,text="Exibir", font=self.main_font,bg=self.main_bg,fg=self.main_fg).place(relx=0.63,rely=0.14)
+            Label(master,text="Exibir", font=self.main_font,bg="#fff",width=14, anchor=N, height=3, bd=1,relief=GROOVE,fg=self.main_fg).place(relx=0.63,rely=0.14)
+            Label(master, text="|P/Busca", font=self.main_font, width=8,anchor=W, bg="white",fg=self.main_fg).place(relx=0.667,rely=0.17)
+            
             self.value_items = Label(master, text="0", font=self.main_font,bg=self.main_bg,fg=self.main_fg)
             self.value_items.place(relx=0.73,rely=0.05)
             self.value_MaxValue = Label(master, text="0,00", font=self.main_font,bg=self.main_bg,fg=self.main_fg) 
             self.value_MaxValue.place(relx=0.73,rely=0.08)
             self.value_MinValue = Label(master, text="0,00", font=self.main_font,bg=self.main_bg,fg=self.main_fg) 
             self.value_MinValue.place(relx=0.73,rely=0.11)
+            
         def entrys():
             
             def filter_nnfe(*args):
@@ -81,10 +224,12 @@ class Table(object):
             self.variable_nnfe.trace("w",filter_nnfe)
             self.variable_keynfe = StringVar(master=master)
             self.variable_keynfe.trace("w",filter_keynfe)
+            self.variable_lim_result = StringVar(master,value="")
             
-            self.prodDescription = Entry(master, bg="#F3FCA1", width=100)
-            self.entry_keynfe = Entry(master, bg="#F3FCA1", textvariable=self.variable_keynfe, width=50, font="times 12 bold")
-            self.entry_nnfe = Entry(master, bg="#F3FCA1", textvariable=self.variable_nnfe)
+            self.prodDescription = Entry(master, bg=self.main_bg_entry, width=100)
+            self.entry_keynfe = Entry(master, bg=self.main_bg_entry, textvariable=self.variable_keynfe, width=50, font="times 12 bold")
+            self.entry_nnfe = Entry(master, bg=self.main_bg_entry, textvariable=self.variable_nnfe)
+            self.entry_lim_result = Entry(master, bg="white", font=self.main_font, textvariable=self.variable_lim_result,relief=FLAT, width=5)
             
             self.prodDescription.focus()
             #self.codEan.place(relx=0.1, rely=0.08)
@@ -92,6 +237,7 @@ class Table(object):
             self.prodDescription.place(relx=0.05, rely=0.055)
             self.entry_keynfe.place(relx=0.05,rely=0.14)
             self.entry_nnfe.place(relx=0.4, rely=0.14)
+            self.entry_lim_result.place(relx=0.632,rely=0.17)
             
         def table():
             colunas = ["EAN", "PRODUTO","CD", "V. UNIT", "V.DESC","QTD", "U TRIB", "V. TRIB", "QTN. TRIB", "V. TOTAL", "ICMS", "FORNECEDOR", "DATA", "NCM", "N° NFE", "C. NFE"]
@@ -111,13 +257,13 @@ class Table(object):
                 tamanho = columns_geo[coluna][0]
                 
                 self.tabela.column(coluna, width=tamanho, minwidth=tamanho)
-            
+        
         labels(), entrys(), table()
         
-        #self.codEan.bind("<Return>",self.get_key)
         self.prodDescription.bind("<Return>",self.get_key)
         self.entry_nnfe.bind("<Return>",self.get_key)
         self.entry_keynfe.bind("<Return>",self.get_key)
+        self.entry_lim_result.bind("<Return>",self.get_key)
 
     def table2(self,master):
         #["file_name","emitente","CNPJ|CPF","@Id","Cliente", "dhEmi","nNFe","cNFe","nNF","vTotProd", "vNF","fat",{"fat","dup"},"vTotDesc"]
@@ -135,8 +281,8 @@ class Table(object):
         self.tabela2.bind("<Return>",select)
         vs = Scrollbar(master=master, orient="vertical", command=self.tabela2.yview, width=15)
         self.tabela2.configure(yscrollcommand=vs.set)
-        vs.place(rely=0.5, relx=0.8 ,relheight=0.48)
-        
+        #vs.place(rely=0.5, relx=0.8 ,relheight=0.48)
+        vs.place(rely=0.5, x=705, relheight=0.48)
         for coluna in colunas:
             self.tabela2.heading(coluna, text=coluna)
             tamanho = columns_geo[coluna][0]
@@ -189,15 +335,8 @@ class app(Table,relogio):
     
     def __init__(self):
         
-        arquivos = os.listdir("NFE")
-        arquivos = list(filter(lambda x : x[-3:] == "xml",arquivos ))
-        self.produtos = []
-        self.list_nfe = []
-        
-        for xml in arquivos:
-            self.get_info(xml)
-            
-        
+        self.DataBase()
+        return
         self.root = Tk()
         self.config(self.root)
         
@@ -217,10 +356,45 @@ class app(Table,relogio):
         
         self.root.mainloop()
     
+    def DataBase(self):
+        
+        self.db = Db()
+        self.db.start(db="Xml_DB.sql",table="XML")
+        #self.db.createBank(bank_name="Xml_DB.sql",table="XML",columns=['emitente', 'CNPJ|CPF', 'Cliente', 'natOp', 'dhEmi', 'nNFe', 'cNFe', 'nNF', 'vTotProd', 'vNF', 'fat', 'vTotDesc'])
+        #self.db.createBank(bank_name="Xml_DB.sql", table="PRODUTOS",columns=['cEAN', 'xProd', 'uCom', 'vUnCom', 'vDesc', 'qntd', 'uTrib', 'vUnTrib', 'qTrib', 'vProd', 'icms', 'emitente', 'dtEmissao', 'NCM', 'nNF', 'cNF'])
+        self.list_nfe = self.db.consultDB(keys_return=["emitente","CNPJ","Cliente","natOp""dhEmi","nNFe","cNFe""nNF","vTotProd", "vNF","fat","vTotDesc"])
+        self.produtos = self.db.consultDB(table="PRODUTOS",keys_return=['cEAN', 'xProd', 'uCom', 'vUnCom', 'vDesc', 'qntd', 'uTrib', 'vUnTrib', 'qTrib', 'vProd', 'icms', 'emitente', 'dtEmissao', 'NCM', 'nNF', 'cNF'])
+        
+        #print(self.list_nfe)
+        #print(self.produtos)
+        arquivos = os.listdir("NFE")
+        arquivos = list(filter(lambda x : x[-3:] == "xml",arquivos ))
+        
+        for xml in arquivos:
+            self.get_info(xml)
+        print(self.db.consultDB(table="main"))
+                  
+        self.db.closeDB()
+        #print(self.produtos)
+        
+        #nfe = "emitente","CNPJ","Cliente","natOp""dhEmi","nNFe","cNFe""nNF","vTotProd", "vNF","fat":{"fat","dup"},"vTotDesc"
+        #prod= "cEAN","xProd","uCom","vUnCom""vDesc","qntd","uTrib","vUnTrib","qTrib", "vProd","icms","emitente", "dtEmissao","NCM","nNF","cNF"
+        #bd.Insert(["coluna_a","coluna_b"],["felipe", "teste3"])
+        '''
+        comparar se arquivo xml jah consta no banco de dados
+        inserir xml na varial com os dados do banco de dados
+        inserir arquivos do xml no banco de dados
+        inserir em um arquivo txt "debug" a listagem das xml que estao no banco de dados
+        excluir o arquivo xml
+        
+        '''
+        
     def hotkeys(self):
-        def st():
-            keyboard.press("shift+tab")
-        shitReturnt = keyboard.add_hotkey("shift+return",st)
+        def F11():
+            self.screenSet = False if self.screenSet == True else True
+            self.root.attributes("-fullscreen",self.screenSet)
+        self.screenSet = False
+        keyboard.add_hotkey("F11",F11)
     
     def config(self, master):
         self.main_bg = "#ddd"
@@ -231,15 +405,18 @@ class app(Table,relogio):
         self.main_dataBase = "Banco_de_dados.sql"
         self.main_title_font = "times 18 bold"
         self.main_font = "consolas 12"
-
+        self.main_bg_entry = "#F3FCA1"
+        
         master.state("zoomed")
         master["bg"] = self.main_bg
         master.title(self.main_title)
         master.geometry(f"{self.main_geometry['width']}x{self.main_geometry['height']}")
-        master.resizable(False,False)
+        master.minsize(800,600)
+        master.minsize(self.main_geometry['width'],self.main_geometry['height'])
+        #master.resizable(False,False)
         
     def window_search_nfe(self, master):
-        master = LabelFrame(master, width=900)
+        master = LabelFrame(master, width=800)
         master.pack(anchor=CENTER,fill=Y,expand=Y)
         master_widgets = Frame(master, bg=self.main_bg)
         master_widgets.place(relx=0, rely=0, relwidth=1, relheight=0.55)
@@ -269,8 +446,6 @@ class app(Table,relogio):
             self.entry_KeyAcess.bind("<Return>",self.get_key)
         
         def nfe():
-            def filter(*args):
-                pass
             
             font = "consolas 10 bold"
             nfe_master = Frame(master, bg=self.main_bg)
@@ -317,8 +492,9 @@ class app(Table,relogio):
         self.table2(master=master_widgets)
         labels(), entrys(), nfe()
         
-    def searchProd(self, prod, manage=None):
+    def searchProd(self, prod, manage=None, per_result="ALL", filter=None):
         
+        self.ProdsList = []
         self.value_items["text"] = "0"
         self.value_MaxValue["text"] = "0,00"
         self.value_MinValue ["text"] = "0,00"
@@ -330,7 +506,15 @@ class app(Table,relogio):
             self.max = value if value > self.max else self.max
             if self.min == 0: self.min = value
             elif value < self.min: self.min = value 
-        if self.cb_descriptionVar.get():
+        def insertOnTable():
+            self.ProdsList = sorted(self.ProdsList, key= lambda dic: dic["dtEmissao"], reverse=True)
+            for i in self.ProdsList:
+                i["dtEmissao"] = i["dtEmissao"].strftime("%d-%m-%Y")
+                self.tabela.insert("",END,values=list(i.values()))
+                i["dtEmissao"] = datetime.strptime(i["dtEmissao"],"%d-%m-%Y")
+                calc_info(i["vUnCom"])
+            
+        if not self.cb_descriptionVar.get() and manage!="NNFe":
             values = prod.split(" ")
             def check_and(keys,words):
                 for key in keys:
@@ -340,19 +524,27 @@ class app(Table,relogio):
             for i in self.produtos:
                 xProd = i["xProd"]
                 if check_and(keys=values, words=xProd):
-                    self.tabela.insert("",END,values=list(i.values()))
-                    calc_info(i["vUnCom"])                    
+                    self.ProdsList.append(i)
+            insertOnTable()
+                             
         elif manage == "NNFe":
             for i in self.produtos:
                 if prod == i["nNF"]:
-                    self.tabela.insert("",END,values=list(i.values()))
-                    calc_info(i["vUnCom"])
+                    self.ProdsList.append(i)
+            insertOnTable()
         
         else:
             for i in self.produtos:
-                if (prod.lower() in str(i["xProd"]).lower()) or (prod in str(i["cEAN"])):
-                    self.tabela.insert("",END,values=list(i.values()))
-                    calc_info(i["vUnCom"])
+                if ((prod.lower() in str(i["xProd"]).lower()) or (prod in str(i["cEAN"]))):
+                    if filter:
+                        if filter == i["nNF"]:
+                            self.ProdsList.append(i)
+                    else:
+                        self.ProdsList.append(i)
+                    if (per_result != "ALL") and len(self.tabela.get_children()) == int(per_result):
+                        break
+            insertOnTable()
+            
         self.value_items["text"], self.value_MaxValue["text"], self.value_MinValue ["text"] = self.count, self.max, self.min
                     
     def sorcheNFe(self,key_nfe):
@@ -373,7 +565,15 @@ class app(Table,relogio):
         elif event.widget in (self.prodDescription, self.entry_nnfe, self.entry_keynfe):
             pyperclip.copy(event.widget.get())
             if event.widget == self.prodDescription :
-                self.searchProd(event.widget.get())
+                try:
+                    per_result = self.variable_lim_result.get() if int(self.variable_lim_result.get())>0 else "ALL"
+                except Exception :
+                    self.variable_lim_result.set("")
+                    per_result = "ALL"
+                if self.entry_nnfe.get() or self.entry_keynfe.get():
+                    self.searchProd(event.widget.get(),per_result=per_result, filter=self.entry_nnfe.get())
+                else:
+                    self.searchProd(event.widget.get(),per_result=per_result)
                 self.prodDescription.delete(0,END)
                 
             elif self.entry_nnfe.get() and (event.widget == self.entry_nnfe):
@@ -419,6 +619,14 @@ class app(Table,relogio):
             infos = dict_xml["nfeProc"]["NFe"]["infNFe"]
         
         nNFe = (infos["@Id"]).replace("NFe","") if "NFe" in infos["@Id"] else infos["@Id"]
+        
+        try:
+            if nNFe in list(map(lambda x: x["nNF"], self.list_nfe)):
+                print("in list")
+                return True
+        except Exception as ERROR:
+            pass
+        
         cNFe = infos["ide"]["cNF"]
         nNFE = infos["ide"]["nNF"]
         natOp = infos["ide"]["natOp"]
@@ -431,9 +639,12 @@ class app(Table,relogio):
             dup = (cobr["dup"] if "dup" in cobr else False) if cobr else False
             fat = cobr["fat"] if cobr else cobr
         except Exception as error: 
-            fat = infos["pag"]
-            dup = 0
-            print(infos.keys(), "\t", error,emitente, nNFe)
+            cobr = infos["pag"]
+            #print(cobr)
+            fat = cobr["vPag"] if 'vPag' in cobr else cobr["detPag"]["vPag"]
+            
+            dup = "0,00"
+            #print(infos.keys(), "\t", error,emitente, nNFe)
         vTotProd = infos["total"]["ICMSTot"]["vProd"]
         vTotNf = infos["total"]["ICMSTot"]["vNF"]
         vTotDesc = infos["total"]["ICMSTot"]["vDesc"]
@@ -441,9 +652,17 @@ class app(Table,relogio):
         if "dhEmi" in infos["ide"]:
             dtEmissao = infos["ide"]["dhEmi"]
             dtEmissao  = (dtEmissao.split("T"))[0]
+            dtEmissao = dtEmissao.replace("/","-")
+            dtEmissao2 = dtEmissao
+            dtEmissao = datetime.strptime(dtEmissao,"%Y-%m-%d")
         else : dtEmissao  = 0
         nfe = {"emitente":emitente["nome"],"CNPJ|CPF":emitente["CNPJ|CPF"],"Cliente":cliente["nome"],"natOp":natOp, "dhEmi":dtEmissao,"nNFe":nNFE,"cNFe":cNFe,"nNF":nNFe,"vTotProd":vTotProd, "vNF":vTotNf,"fat":{"fat":fat,"dup":dup},"vTotDesc":vTotDesc}
         self.list_nfe.append(nfe)
+        nfe["dhEmi"] = dtEmissao2
+        nfe["fat"] = json.dumps(nfe["fat"])
+        #print(list(nfe.keys()))
+        #print(nfe["fat"],"\n")
+        self.db.Insert(table="main",columns=list(nfe.keys()),values=list(nfe.values()))
         
         def add_prod(prod,icmsInclude,imposto):
             if "vDesc" in prod:
@@ -454,10 +673,12 @@ class app(Table,relogio):
             if icmsInclude: valueIcms = imposto["vTotTrib"] if "vTotTrib" in imposto else 0
             else: valueIcms = 0 
             NCM = prod["NCM"] if "NCM" in prod else "0"
-            peso = "0.00"
             
             prod = {"cEAN":str(prod["cEAN"]),"xProd":prod["xProd"],"uCom":prod["uCom"],"vUnCom":self.Frmt(prod["vUnCom"]),"vDesc": self.Frmt(desc),"qntd":self.Frmt(prod["qCom"]),"uTrib":prod["uTrib"], "vUnTrib":self.Frmt(prod["vUnTrib"]), "qTrib":self.Frmt(prod["qTrib"]), "vProd":self.Frmt(prod["vProd"]),"icms":self.Frmt(valueIcms),"emitente":emitente["nome"], "dtEmissao":dtEmissao,"NCM":NCM,"nNF":nNFE,"cNF":cNFe}
             self.produtos.append(prod)
+            prod["dtEmissao"]=dtEmissao2
+            
+            #self.db.Insert(table="PRODUTOS",columns=list(prod.keys()),values=list(prod.values()))
         
         def icms():
             self.totalNfe = infos["total"]
@@ -483,12 +704,6 @@ class app(Table,relogio):
             #print(json.dumps(dict_xml,indent=4))
         #valores.append([nNFe,cNFe,emitente["nome"],cliente["nome"],endereco["xLgr"]+" CEP:"+endereco["CEP"],pesoBruto])
     
-    def open_xml(self,key):
-        # !! Adicionar função que armazena em uma variavel a descrição do item após encontrado o EAN para busca em produtos com a mesma descrição mas sem GTIN
-        # !! Adicionar função para busca de nota fiscal pela chave d acesso
-        
-        os.system(f'NFE\{key}')
-        
     def calc(self,value,amount,cod):
         # print(list(i for i,c in enumerate(a) if c == "x"))     #exemplo para uso de generator
         try:

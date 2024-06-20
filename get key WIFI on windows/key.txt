@@ -1,13 +1,15 @@
-IARA CASA : Helilton@2023#
-Baby : 688728602
-Ira_Network 2 : ira12345678
+Supermercado Hely : 20682788653
+LP_NET : 1234566789
 Ira_Network : 12345678
 Aquario : 20682788653a
+Supermercado Hely 5GHz : 20682788653a
 SupermercadoHely : 20682788653
+Clientes - Supermercado Hely : None?
+IARA CASA : Helilton@2023#
+Baby : 688728602
+STARLINK : None?
 INTELBRAS : None?
 AndroidAP : karoline
-STARLINK : None?
 SUPERMERCQDO HELY : 3400787623
 SH2.0 : 688728602
 SUPERMERCADO HELY-5G : hely#@!2022
-LP_NET : 1234566789
