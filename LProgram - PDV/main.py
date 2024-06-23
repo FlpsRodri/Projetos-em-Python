@@ -1,15 +1,62 @@
 from tkinter import *
 from tkinter import ttk, messagebox
 import keyboard
+import sqlite3
 import os
+
+class FilterEntrance(object):
+    numeros: str
+
+    def __init__(self):
+        self.numeros = "0123456789"
+        self.alfabeto = "abcçdefghijklmnopqrstuv"
+        self.acentos = "âãáàäéèêëíìîïóòõôöúùûü"
+        self.carcEspeciais = "!@#$%¨&*()_-=+§{[ªº]}~/\\°?;:.>,<|"
+
+        """
+        uso:
+        instanciando a classe
+        Filter = FilterEntrance()
+        atribuindo a uma variavel
+        value = "abc1234def"
+        var_only_num = Filter.onlyNum(value)
+        var_only_alfa = Filter.onlyAlfa(value=value, acentos=True, caractEspec=True) # caso queira apenas caracters especiais especificos, passar em formato string: caractEspec = "#@+-/"
+        """
+
+    def onlyNun(self, value, maxWidth: int = None, crctEspec: str = None):
+        listValues = self.numeros
+        if crctEspec:
+            listValues += crctEspec
+        value = list(filter(lambda x: x in listValues, value))
+        if maxWidth:
+            value = value[:maxWidth]
+        del listValues
+        return "".join(value)
+
+    def onlyAlfa(self, value: str, acentos: bool = False, caractEspec=None, maxWidth: int = None):
+        listValues = self.alfabeto
+        if acentos:
+            listValues += self.acentos
+        if caractEspec:
+            if type(caractEspec) == bool:
+                listValues += self.carcEspeciais
+            else:
+                listValues += caractEspec
+        value = list(filter(lambda x: x in listValues, value))
+        if maxWidth:
+            value = value[:maxWidth]
+        del listValues
+        return "".join(value)
 
 
 class sale_screen(object):
     def __init__(self, master):
-        self.entry_value = None
-        self.entry_qnt = None
-        self.entry_item = None
-        self.entry_cod = None
+        self.codePayVar = None
+        self.valueVar = None
+        self.itemVar = None
+        self.qntVar = None
+        self.codVar = None
+        self.filter = FilterEntrance()
         self.tv = None
         master = Toplevel(master=master)
         master.focus_force()
@@ -49,15 +96,18 @@ class sale_screen(object):
         def enter(*args):
             keyboard.press("space")
 
+        def erase():
+            pass
+
         y = 180
         font = "arial 12"
-        lmp = Button(master, text="LIMPAR", bg="#ccc", font=font)
+        lmp = Button(master, text="LIMPAR", bg="#ccc", font=font, command=erase)
         lmp.place(x=315, y=y)
         lmp.bind("<Return>", enter)
-        cancel = Button(master, text="CANCELAR TUDO", fg="#e00", bg="#ccc", font=font)
+        cancel = Button(master, text="CANCELAR TUDO", fg="#e00", bg="#ccc", font=font, state=DISABLED)
         cancel.place(x=400, y=y)
         cancel.bind("<Return>", enter)
-        fin = Button(master, text="FINALIZAR VENDA (V)", fg="#183E0C", bg="#cfc", font=font)
+        fin = Button(master, text="FINALIZAR VENDA (V)", fg="#183E0C", bg="#cfc", font=font, state=DISABLED)
         fin.place(x=560, y=y)
         fin.bind("<Return>", enter)
 
@@ -72,22 +122,50 @@ class sale_screen(object):
         Label(master, text="CODIGO DE PAGAMENTO", anchor=W).place(x=40, y=68)
 
     def entry(self, master: "frame tkinter"):
-        def a(*args):
-            print("pressed")
+        def ast(*args):
+            if self.codVar.get():
+                self.qntVar.set(self.codVar.get())
+                self.codVar.set("")
 
+        def validate():
+            pass
+
+        def enter(value=None, defautValue=None):
+            if value:
+                if value != defautValue:
+                    validate()
+                else:
+                    keyboard.press("tab")
+            else:
+                keyboard.press("tab")
+
+        self.codVar = StringVar(value="")
+        self.codVar.trace("w", lambda *args: self.codVar.set(str(self.filter.onlyNun(self.codVar.get(), maxWidth=20))))
+        self.qntVar = StringVar(value="1")
+        self.qntVar.trace("w", lambda *args: self.qntVar.set(str(self.filter.onlyNun(self.qntVar.get(), maxWidth=10))))
+        self.itemVar = StringVar()
+        self.valueVar = StringVar(value="0,00")
+        self.valueVar.trace("w", lambda *args: self.qntVar.set(str(self.filter.onlyNun(self.valueVar.get(), maxWidth=10))))
+        self.codePayVar = StringVar(value="")
         y = 150
-        self.entry_cod = Entry(master, width=15)
-        self.entry_cod.place(x=40, y=y)
-        self.entry_cod.focus()
-        self.entry_cod.bind("*", a)
-        self.entry_qnt = Entry(master, width=15)
-        self.entry_qnt.place(x=150, y=y)
-        self.entry_item = Entry(master, width=60)
-        self.entry_item.place(x=260, y=y)
-        self.entry_value = Entry(master, width=15, justify=RIGHT)
-        self.entry_value.place(x=640, y=y)
-        self.entry_code_payment = Entry(master, width=30)
-        self.entry_code_payment.place(x=40, y=90)
+        entry_cod = Entry(master, textvariable=self.codVar, width=15)
+        entry_cod.place(x=40, y=y)
+        entry_cod.focus()
+        entry_cod.bind("<KeyPress-*>", ast)
+        entry_cod.bind("<Return>", lambda *args: enter(entry_cod.get()))
+        entry_qnt = Entry(master, textvariable=self.qntVar, width=15)
+        entry_qnt.place(x=150, y=y)
+        entry_qnt.bind("<Return>", lambda *args: enter(entry_qnt.get(), defautValue="1"))
+        entry_item = Entry(master, textvariable=self.itemVar, width=60)
+        entry_item.place(x=260, y=y)
+        entry_item.bind("<Return>", lambda *args: enter(entry_item.get()))
+        entry_value = Entry(master, textvariable=self.valueVar, width=15, justify=RIGHT)
+        entry_value.place(x=640, y=y)
+        entry_value.bind("<Return>", lambda *args: enter(entry_value.get(), defautValue="0,00"))
+        entry_code_payment = Entry(master, textvariable=self.codePayVar, width=30)
+        entry_code_payment.place(x=40, y=90)
+        entry_code_payment.bind("<Return>", lambda
+            *args: entry_cod.focus() if not entry_code_payment.get() else validate())
 
 
 class client_screen(object):
@@ -375,26 +453,7 @@ class config_screen(object):
         Button(master, text="CADASTRO DE FUNCIONÁRIOS", height=2, width=40).place(x=400, y=80)
         Button(master, text="DEFINIR JUROS E MULTAS", height=2, width=40).place(x=400, y=130)
         Button(master, text="SALVAR", height=2, width=40).place(x=400, y=180)
-"""
-class EnterNext(object):
-    def __init__(self, master):
-        self.lastEvent = StringVar(master=master)
-        master.bind("<FocusIn>", self.scan)
-        self.hotkeys()
 
-    def scan(self, event):
-        eventGet = (str(event.widget)).replace(".!", "")
-        self.lastEvent.set(value=eventGet)
-
-    def hotkeys(self):
-        def enter():
-            print(self.lastEvent.get())
-            if "entry" in (self.lastEvent.get().lower()):
-                print("passou?")
-
-        keyboard.add_hotkey("enter", enter)
-
-"""
 
 class login(object):
     def __init__(self):
@@ -403,8 +462,6 @@ class login(object):
         self.permission = None
         self.permission = BooleanVar(value=False)
         self.process = BooleanVar()
-        self.user = "USERMASTER"
-        self.usersAlowed = {self.user: os.environ[self.user]}
 
     def loginScreen(self, master):
         self.permission.set(value=False)
@@ -415,7 +472,6 @@ class login(object):
         master.title("LOGIN")
         master.focus_force()
         master.overrideredirect(True)
-        #master.protocol("WM_DELETE_WINDOW", lambda event: None)
         master.grab_set()
         bg = "#ddd"
         master.config(bg=bg)
@@ -424,62 +480,104 @@ class login(object):
         Label(master, text="SENHA", bg=bg, font=font).place(x=150, y=40)
         self.entry_user = Entry(master, font=font, width=10)
         self.entry_user.place(x=30, y=60)
-        self.entry_user.focus()
-        self.entry_user.bind("<Return>", lambda *args: keyboard.press("Tab") )
+        self.entry_user.focus_force()
+        self.entry_user.bind("<Return>", lambda *args: keyboard.press("Tab"))
         self.entry_key = Entry(master, font=font, width=10, show="*")
         self.entry_key.place(x=150, y=60)
-        self.entry_key.bind("<Return>", lambda *args: self.login(master=master, user=self.entry_user.get().upper(), key=self.entry_key.get()))
+        self.entry_key.bind("<Return>", lambda *args: self.login(master=master, user=self.entry_user.get().upper(),
+                                                                 key=self.entry_key.get()))
+        btnClose = Button(master=master, text="X", font="times 12 bold", fg="red", border=None, relief=GROOVE, width=2,
+                          justify=RIGHT, command=lambda: master.destroy())
+        btnClose.place(x=274, y=0)
         master.mainloop()
         return self.permission.get()
 
     def login(self, master, user: str, key: str):
-        if (key) == self.usersAlowed.get(self.user, False):
+        if True:
+            # if key == self.usersAlowed.get(self.user, False):
             self.permission.set(True)
             master.destroy()
             self.lock(state=NORMAL)
 
-        else: print("nannanao")
+        else:
+            print("nannanao")
 
     def users(self):
         pass
 
 
+class DataBase(object):
+    def __init__(self, dataBaseName : str):
+        self.dataBase = dataBaseName
+
+    def connect(self):
+        if self.checkDb(dataBaseName=self.dataBase):
+            messagebox.showinfo(message="Conected")
+        else:
+            return False
+
+    def CREATE(self):
+        pass
+
+    def checkDb(self, dataBaseName : str):
+        try:
+            with open(dataBaseName, "r") as db:
+                return True
+        except Exception as Error :
+            message = "Banco de dados não encontrado\nSolicite assistência especializada \nDev: felipesgs@proton.me\n"+str(Error)
+            messagebox.showerror(title="DATABASE ERROR", message=message)
+            restore = messagebox.askokcancel(title="Assitência", message="Continuar para Restauração do Banco de dados")
+            if restore:
+                self.restoreDb()
+            return False
+
+    def restoreDb(self):
+        print("restaurar?")
+        pass
+
 class app(login):
 
     def __init__(self):
 
-        self.title = "Controle de vendas - LPprog"
-        self.main_font = "consolas 12"
-        self.main_bg = "#777"
-        self.main_fg = "black"
-        self.main_geometry = "800x600"
-        self.screenSet = False
-
         self.master = Tk()
         super().__init__()
+
         self.main_frame = Frame(self.master, bg="#999")
         self.main_frame.place(relwidth=1, relx=0, rely=0)
+
+        self.title = None
+        self.main_font = None
+        self.main_bg = None
+        self.main_fg = None
+        self.main_geometry = None
+        self.screenSet = None
+        self.icon = None
         self.btn_cn = None
         self.btn_v = None
         self.btn_c = None
         self.btn_m = None
         self.btn_user = None
-        self.main_config()
-        self.hotkeys()
-        self.buttons()
-        self.loginScreen(self.master)
-        self.master.mainloop()
 
+        self.db = DataBase(dataBaseName="DBteste.sql")
+        if self.db.connect():
+            self.main_config()
+            self.hotkeys()
+            self.buttons()
+            self.loginScreen(self.master)
+            self.master.mainloop()
+
+        else: self.master.destroy()
     def buttons(self):
         def enter(*args):
             keyboard.press("space")
 
         self.master.bind("<Return>", enter)
 
-        self.btn_user = Button(self.main_frame, text="USUÁRIO", height=5, width=20, command=lambda: self.lock(state=DISABLED))
+        self.btn_user = Button(self.main_frame, text="USUÁRIO", height=5, width=20,
+                               command=lambda: self.lock(state=DISABLED))
         self.btn_user.pack(side=LEFT, anchor=N)
         self.btn_v = Button(self.main_frame, text="NOVA VENDA", height=5, width=20, state=DISABLED,
-                            command=lambda: sale_screen(self.master))
+                            command=lambda: sale_screen(master=self.master))
         self.btn_v.pack(side=LEFT, anchor=N)
         self.btn_c = Button(self.main_frame, text="CLIENTES", height=5, width=20, state=DISABLED,
                             command=lambda: client_screen(self.master))
@@ -501,23 +599,27 @@ class app(login):
             self.loginScreen(self.master)
 
     def main_config(self):
+        self.title = "Controle de vendas - LPprog"
+        self.main_font = "consolas 12"
+        self.main_bg = "#777"
+        self.main_fg = "black"
+        self.main_geometry = "800x600"
+        self.screenSet = False
+        self.icon = "Images\Comercio.ico"
+
         self.master.state("zoomed")
         self.master.title(self.title)
         self.master.geometry(self.main_geometry)
         self.master.config(bg=self.main_bg)
-        self.master.iconbitmap(r"\Images\comercio.ico")
+        self.master.wm_iconbitmap(self.icon)
 
     def hotkeys(self):
-        def full_screen():
+        def full_screen(*args):
             self.screenSet = False if self.screenSet is True else True
             self.master.attributes("-fullscreen", self.screenSet)
 
-        def f9():
-            if str(self.master.focus_get()) == str(self.master.focus_get())[0]:
-                sale_screen(self.master)
-
-        keyboard.add_hotkey("F11", full_screen)
-        keyboard.add_hotkey("F9", f9)
+        self.master.bind("<KeyPress-F2>", lambda *args: sale_screen(self.master))
+        self.master.bind("<KeyPress-F11>", full_screen)
 
 
 if __name__ == '__main__':
